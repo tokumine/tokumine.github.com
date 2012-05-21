@@ -28,6 +28,14 @@
 </div>    
 <div class="fun">
   <script>
+         // TODO
+         // -----
+         // dat.gui.js
+         // repel
+         // ontouch events
+         // mousemove disturb
+         // no highlight of text on click
+  
          var canvas = document.createElement('canvas');
          var ctx    = canvas.getContext('2d');
          var numParticles = 5;
@@ -86,26 +94,24 @@
                      diff.minusEq(p1.pos);
 
                      if (diff.isMagLessThan(200)){
-                         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                         //apply force to both objects vectors
+                         var l = diff.magnitude();
+                         var forceamount = 1-(l/100); // 1+ to repel
+
+                         diff.normalise();
+                         diff.multiplyEq(forceamount * 0.1);
+                         p1.vel.minusEq(diff);
+                         p2.vel.plusEq(diff);
+                       
+                         ctx.strokeStyle = 'rgba(255,255,255,0.3)';
                          ctx.beginPath();
                          ctx.lineWidth = 1;
                          ctx.moveTo(p1.pos.x, p1.pos.y);
                          ctx.lineTo(p2.pos.x, p2.pos.y);
                          ctx.stroke();
-
-                         //apply force to both objects vectors
-                         var l = diff.magnitude();
-                         var forceamount = 1-(l/100);
-
-                         diff.normalise();
-
-                         diff.multiplyEq(forceamount * 0.1);
-                         p1.vel.minusEq(diff);
-                         p2.vel.plusEq(diff);
                      }
                  }
              }
-
          }
 
 
@@ -129,9 +135,16 @@
                  ctx.strokeStyle = "white";
                  ctx.fillStyle = "rgba(180,180,255,0.1)";
                  ctx.beginPath();
-                 ctx.lineWidth = 4;
+                 //ctx.lineWidth = 4;
                  ctx.arc(pos.x, pos.y, 50, 0, Math.PI * 2, true);
                  ctx.fill();
+
+                 ctx.strokeStyle = "rgba(255,255,255,0.05)";
+                 ctx.beginPath();
+                 //ctx.lineWidth = 4;
+                 ctx.arc(pos.x, pos.y, 100, 0, Math.PI * 2, true);
+                 ctx.stroke();
+
 
                  ctx.fillStyle = "rgba(255,255,255,0.8)";
                  ctx.beginPath();
