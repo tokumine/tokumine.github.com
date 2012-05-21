@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Simon Tokumine</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/tokumine.css">
+    <script src="js/canvas/vector2.js" type="text/javascript"></script>
+</head>
+<body>
+<div class="card">
+  <h1>Simon Tokumine</h1>
+  <h2>wearer of many hats</h2>
+  <ul>
+    <li><a href="http://www.twitter.com/tokumin" target="_blank">twitter</a></li>
+    <li><a href="https://plus.google.com/108496261671316648522/posts" target="_blank">Google+</a></li>
+    <li><a href="http://www.github.com/tokumine" target="_blank">github</a></li>
+    <li><a href="http://uk.linkedin.com/in/tokumine" target="_blank">Linkedin</a></li>
+    <li><a href="http://www.vizzuality.com" target="_blank">work 1</a></li> 
+    <li><a href="http://www.jrpass.com" target="_blank">work 2</a></li>
+    <li><a href="http://www.slideshare.net/tokumine/presentations" target="_blank">slides 1</a></li>
+    <li><a href="https://speakerdeck.com/u/tokumine" target="_blank">slides 2</a></li>
+    <li><a href="http://tokumine.wordpress.com" target="_blank">archive</a></li>
+  </ul>  
+</div>    
+<div class="fun">
+  <script>
+         var canvas = document.createElement('canvas');
+         var ctx    = canvas.getContext('2d');
+         var numParticles = 5;
+         var particles = [];
+
+         var mouseX;
+         var mouseY;
+         var mouseVelX = 0;
+         var mouseVelY = 0;
+         var lastMouseX = mouseX;
+         var lastMouseY = mouseY;
+         var mouseDown = false;
+         var displayHelp = true;
+
+         canvas.width = window.innerWidth;
+         canvas.height = window.innerHeight;
+
+         ctx.globalCompositeOperation = "lighten"
+         document.body.appendChild(canvas);
+
+         // build particle objects, position and give velocity
+         for (var i = 0; i < numParticles; i++){
+             var particle = new Particle();
+             particle.pos.reset(Math.random()*canvas.width, Math.random() * canvas.height);
+             particle.vel.reset(Math.random()*4-2, Math.random()*4-2);
+
+             particles.push(particle);
+         }
+
+         initMouseListeners();
+
+         var that = this;
+         setInterval(function(){
+             that.loop()
+         }, 1000/60);
+
+         function loop(){
+             //ctx.fillStyle="rgba(17,17,51,0.6)";
+             //ctx.fillRect(0,0,canvas.width, canvas.height);
+             ctx.clearRect(0,0,canvas.width, canvas.height);
+
+             // draw dots
+             for (var i = 0; i < particles.length; i++){
+                 var p = particles[i];
+                 p.update(canvas);
+                 p.draw(ctx);
+             }
+
+             // draw lines if close
+             for(var i = 0; i < particles.length; i++){
+                 var p1 = particles[i];
+                 for (var j = i+1; j < particles.length; j++){
+                     var p2 = particles[j];
+
+                     var diff = p2.pos.clone();
+                     diff.minusEq(p1.pos);
+
+                     if (diff.isMagLessThan(200)){
+                         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                         ctx.beginPath();
+                         ctx.lineWidth = 1;
+                         ctx.moveTo(p1.pos.x, p1.pos.y);
+                         ctx.lineTo(p2.pos.x, p2.pos.y);
+                         ctx.stroke();
+
+                         //apply force to both objects vectors
+                         var l = diff.magnitude();
+                         var forceamount = 1-(l/100);
+
+                         diff.normalise();
+
+                         diff.multiplyEq(forceamount * 0.1);
+                         p1.vel.minusEq(diff);
+                         p2.vel.plusEq(diff);
+                     }
+                 }
+             }
+
+         }
+
+
+         function Particle(){
+             var pos = this.pos = new Vector2(0,0);
+             var vel = this.vel = new Vector2(0,0);
+
+             this.update = function(canvas){
+                 pos.plusEq(vel);
+
+                 //add drag
+                 vel.multiplyEq(0.99);
+
+                 if(pos.x < 0) pos.x = canvas.width;
+                 else if(pos.x > canvas.width) pos.x = 0;
+                 if(pos.y < 0) pos.y = canvas.height;
+                 else if(pos.y > canvas.height) pos.y = 0;
+             };
+
+             this.draw = function(ctx){
+                 ctx.strokeStyle = "white";
+                 ctx.fillStyle = "rgba(180,180,255,0.1)";
+                 ctx.beginPath();
+                 ctx.lineWidth = 4;
+                 ctx.arc(pos.x, pos.y, 50, 0, Math.PI * 2, true);
+                 ctx.fill();
+
+                 ctx.fillStyle = "rgba(255,255,255,0.8)";
+                 ctx.beginPath();
+                 ctx.arc(pos.x, pos.y, 3, 0, Math.PI * 2, true);
+                 ctx.fill();
+                 //ctx.stroke();
+             };
+         }
+
+         function initMouseListeners(){
+             document.addEventListener('mousemove', onMouseMove, false);
+             document.addEventListener('mousedown', onMouseDown, false);
+             document.addEventListener('mouseup', onMouseUp, false);
+         }
+
+         function onMouseMove( event ){
+             event.preventDefault();
+             mouseX = event.clientX;
+             mouseY = event.clientY;
+         }
+
+         function onMouseDown( event ){
+             mouseDown = true;
+             var particle = new Particle();
+             particle.pos.reset(mouseX, mouseY);
+             particle.vel.reset(Math.random()*4-2, Math.random()*4-2);             
+             particles.push(particle);
+             if (displayHelp === true){
+               var help = document.getElementById('clickme');
+               help.style.display = 'none';
+               displayHelp = false;
+             }             
+         }
+
+         function onMouseUp( event ){
+             mouseDown = false;
+         }
+     </script>
+</div>
+<div id="clickme">
+  Click me!
+</div>
+
+<!--
+<div class="whatsthis">
+ <h3>What's this?</h3>
+ <p>asdfasdfsadf</p>
+</div>   
+-->
+
+<!-- google analytics -->
+</body>
+</html>

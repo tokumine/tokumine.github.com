@@ -1,0 +1,32 @@
+---
+layout: default
+title: Simon Tokumine
+---
+
+<div id="home">
+    <h2>writing</h2>
+    <ul class="posts">
+        {% for post in site.categories.writing %}
+        <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>speaking</h2>
+    <ul class="posts">
+        {% for post in site.categories.speaking %}
+        <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
+        {% endfor %}
+    </ul>
+
+
+    <h2>experiments</h2>
+    <ul class="posts">
+        {% for post in site.categories.labs %}
+        <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>open source projects</h2>
+    <ul class="posts">
+    </ul>
+</div>

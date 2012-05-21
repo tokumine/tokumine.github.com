@@ -1,0 +1,49 @@
+body{
+  background:#1A1A1A;
+  color:#F8F8EC;  
+}
+
+.card{
+  background:#fff;
+  opacity:0.8;
+  color: #1A1A1A;  
+  position:absolute;
+  top:0;
+  left:0;
+  float:left;
+  padding:1em 1.5em;
+  box-shadow: 0px 0px 10px #fff;
+  border-bottom-right-radius: 1px;
+}
+
+.card h1{
+  font-size: 2em;
+  font-family: 'Droid Sans', sans-serif;
+  font-weight:700;
+  margin:0;
+  padding:0;
+}
+
+.card h2{
+  font-size: 1.2em;
+  font-family: 'Droid Sans', sans-serif;
+  font-weight:400;
+  color:#400;
+  margin:0;
+  padding:0;
+  line-height:0.5em;
+}
+
+ul{
+  margin-top:1.5em;
+}
+
+#clickme{
+  position:absolute;
+  top:50%;
+  left:50%;
+  font-family: 'Droid Sans', sans-serif;
+  font-weight:400;
+  font-size:1em;
+  color:#666;
+}
