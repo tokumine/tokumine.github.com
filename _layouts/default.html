@@ -32,15 +32,12 @@
     <h1>Simon Tokumine</h1>
     <h2>wearer of many hats</h2>
     <ul>
+        <li><a href="https://plus.google.com/108496261671316648522/posts" target="_blank">Google+</a></li>
         <li><a href="http://www.twitter.com/tokumin" target="_blank">twitter</a></li>
         <li><a href="http://www.github.com/tokumine" target="_blank">github</a></li>
-        <li><a href="http://uk.linkedin.com/in/tokumine" target="_blank">Linkedin</a></li>
-        <li><a href="https://plus.google.com/108496261671316648522/posts" target="_blank">Google+</a></li>
-        <li><a href="http://instagram.com/tokumin" target="_blank">Instagram</a></li>
-        <li><a href="http://www.jrpass.com" target="_blank">work 1</a></li>
-        <li><a href="http://www.vizzuality.com" target="_blank">work 2</a></li>
-        <li><a href="https://speakerdeck.com/u/tokumine" target="_blank">slides 1</a></li>
-        <li><a href="http://www.slideshare.net/tokumine/presentations" target="_blank">slides 2</a></li>    
+        <li><a href="http://uk.linkedin.com/in/tokumine" target="_blank">Linkedin</a></li>                
+        <li>work <a href="http://www.google.com" target="_blank">1</a> - <a href="http://www.jrpass.com" target="_blank">2</a></li>       
+        <li>slides <a href="https://speakerdeck.com/u/tokumine" target="_blank">1</a> - <a href="http://www.slideshare.net/tokumine/presentations" target="_blank">2</a></li>        
         <li><a href="http://tokumine.wordpress.com" target="_blank">archive</a></li>
         <li><a href="mailto:si@tinypla.net" target="_blank">contact</a></li>
     </ul>
@@ -76,10 +73,10 @@ initMouseListeners();
 
 // game behaviour
 var randomStart = true;
-var numParticles = Math.random()*5+5;
+var numParticles = 15;
 var attractDistance = 200;
 var repelDistance = attractDistance / 2;
-var elasticity = 0.1;
+var elasticity = 0.2;
 var drag = 0.99;
 var speedLimit = 10;
 
@@ -91,18 +88,18 @@ var connectingLineStrokeStyle = 'rgba(255,255,255,0.3)';
 var connectingLineWidth       = 1;
 var outerShellLineWidth       = 0.5;
 var connectionsOn = true;
-var outerShellOn  = true;
+var outerShellOn  = false//true;
 var innerShellOn  = true;
 var centrePointOn = true;
 var outerShell  = attractDistance / 2.0;
 var innerShell  = repelDistance / 2.0;
-var centrePoint = 3;
+var centrePoint = 2;
 var maxVisibleConnections = 20;
 var showStats = false;
 var showControls= true;
 var particleBump = 10;
 var attractMin = 1;
-var attractMax = 350;
+var attractMax = 250;
 var repelMin = 10;
 var repelMax = 350;
 var autoAttract = false;
@@ -156,10 +153,24 @@ for (var i = 0; i < numParticles; i++){
     particles.push(particle);
 }
 
-setInterval(function(){
-    if (showStats) { stats.update(); }
-    that.loop();
-}, 1000/60);
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+
+requestAnimFrame(that.loop);
+
+
+// setInterval(function(){
+//     if (showStats) { stats.update(); }
+//     that.loop();
+// }, 1000/60);
 
 function moreParticles(){
     for (var i = 0; i < particleBump; i++){
@@ -188,10 +199,12 @@ function save() {
 }
 
 function loop(){
+    if (showStats) { stats.update(); }
+    
     // autoupdaters
     if(autoAttract){
         var target = (autoAttractDir % 2 == 0) ? attractMax : attractMin;
-        attractDistance = attractDistance + (target - attractDistance) * 0.04;
+        attractDistance = attractDistance + (target - attractDistance) * 0.1;
         if (Math.round(attractDistance) == target){ autoAttractDir++; }
 
 //        var targetFrom = (autoAttractDir % 2 == 0) ? attractMax : attractMin;
@@ -210,9 +223,13 @@ function loop(){
     }
 
     // clear screenback
-    ctx.fillStyle = (ghostOn ? "rgba(26,26,26,0.1)" : "rgba(26,26,26,1)" )
-    ctx.fillRect(0,0,canvas.width, canvas.height);
-
+    if (ghostOn){
+        ctx.fillStyle = "rgba(26,26,26,0.01)";
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+    } else {
+        ctx.clearRect(0,0,canvas.width, canvas.height);    
+    }    
+    
     // draw mouse if needed
     mouse.draw(ctx);
 
@@ -264,6 +281,7 @@ function loop(){
             }
         }
     }
+    requestAnimFrame(that.loop);
 }
 
 
