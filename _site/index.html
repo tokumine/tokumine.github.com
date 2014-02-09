@@ -1,0 +1,383 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Simon Tokumine</title>
+    <meta name="description" content="Aggregated links all about Simon Tokumine (and some fun too)" />
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/tokumine.css">
+    <script src="js/canvas/vector2.js" type="text/javascript"></script>
+    <script src="js/canvas/mouse.js" type="text/javascript"></script>
+    <script src="js/lib/dat.gui.min.js" type="text/javascript"></script>
+    <script src="js/lib/stats.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-227565-7']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+
+    </script>
+</head>
+<body>
+<div class="card">
+    <h1>Simon Tokumine</h1>
+    <h2>wearer of many hats</h2>
+    <ul>
+        <li><a href="https://plus.google.com/108496261671316648522/posts" target="_blank">Google+</a></li>
+        <li><a href="http://www.twitter.com/tokumin" target="_blank">twitter</a></li>
+        <li><a href="http://www.github.com/tokumine" target="_blank">github</a></li>
+        <li><a href="http://uk.linkedin.com/in/tokumine" target="_blank">Linkedin</a></li>                
+        <li>work <a href="http://www.google.com" target="_blank">1</a> - <a href="http://www.jrpass.com" target="_blank">2</a></li>       
+        <li>slides <a href="https://speakerdeck.com/u/tokumine" target="_blank">1</a> - <a href="http://www.slideshare.net/tokumine/presentations" target="_blank">2</a></li>        
+        <li><a href="http://tokumine.wordpress.com" target="_blank">archive</a></li>
+        <li><a href="mailto:si@tinypla.net" target="_blank">contact</a></li>
+    </ul>
+</div>
+<div class="fun">
+<script>
+// TODO
+// -----
+// ontouch events
+// no highlight of text on click
+// benchmark optimise
+// non-linear interpolation
+
+// Environment configuration
+var canvas = document.createElement('canvas');
+var ctx = canvas.getContext('2d');
+var particles = [];
+var displayHelp = true;
+var that = this;
+var stats = new Stats();
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+ctx.globalCompositeOperation = "lighten";
+document.body.appendChild(canvas);
+
+// setup mouse handler
+var mouse = initMouse();
+mouse.showStats = false;
+mouse.visible = false;
+mouse.pos.x = window.innerWidth/2;
+mouse.pos.y = window.innerHeight/2;
+initMouseListeners();
+
+// game behaviour
+var randomStart = true;
+var numParticles = 15;
+var attractDistance = 200;
+var repelDistance = attractDistance / 2;
+var elasticity = 0.2;
+var drag = 0.99;
+var speedLimit = 10;
+
+// game appearance
+var innerShellFillStyle       = "rgba(180,180,255,0.1)";
+var outerShellStrokeStyle     = "rgba(255,255,255,0.1)";
+var centrePointFillStyle      = "rgba(255,255,255,0.8)";
+var connectingLineStrokeStyle = 'rgba(255,255,255,0.3)';
+var connectingLineWidth       = 1;
+var outerShellLineWidth       = 0.5;
+var connectionsOn = false;
+var outerShellOn  = false//true;
+var innerShellOn  = true;
+var centrePointOn = true;
+var outerShell  = attractDistance / 2.0;
+var innerShell  = repelDistance / 2.0;
+var centrePoint = 2;
+var maxVisibleConnections = 20;
+var showStats = false;
+var showControls= true;
+var particleBump = 10;
+var attractMin = 1;
+var attractMax = 250;
+var repelMin = 10;
+var repelMax = 350;
+var autoAttract = false;
+var autoRepel = false;
+var autoAttractDir = 1;
+var autoRepelDir = 1;
+var ghostOn = false;
+var clickAttract = false;
+
+// dat.gui.js
+if (showControls){
+    var gui = new dat.GUI({params:{closed: true}});
+    gui.closed = true;
+
+    gui.add(that, 'attractDistance',attractMin,attractMax).listen().name('attract');
+    gui.add(that, 'repelDistance',repelMin,repelMax).listen().name('repel');
+    gui.add(that, 'elasticity',0,1);
+    gui.add(that, 'drag',0.75,1);
+    gui.add(that, 'clickAttract').name('click attract');
+    gui.add(that, 'autoAttract').name('auto attract');
+    gui.add(that, 'autoRepel').name('auto repel');
+    gui.add(that, 'moreParticles').name('more dots!');
+    gui.add(that, 'save').name('save as PNG');
+
+    var f1 = gui.addFolder('Advanced');
+    f1.add(that, 'toggleStats').name('show FPS');
+    f1.add(that, 'ghostOn');
+    f1.add(that, 'outerShellOn');
+    f1.add(that, 'innerShellOn');
+    f1.add(that, 'centrePointOn');
+    f1.add(that, 'connectionsOn');
+    f1.add(that, 'centrePoint',1,100);
+    f1.add(that, 'outerShellLineWidth',0.1,100);
+    f1.add(that, 'connectingLineWidth',1,100);
+    f1.add(that, 'maxVisibleConnections',1,100);
+    f1.addColor(that, 'innerShellFillStyle');
+    f1.addColor(that, 'outerShellStrokeStyle');
+    f1.addColor(that, 'centrePointFillStyle');
+    f1.addColor(that, 'connectingLineStrokeStyle');
+}
+
+// build particle objects, position and give velocity
+for (var i = 0; i < numParticles; i++){
+    var particle = new Particle();
+    if (randomStart){
+        particle.pos.reset(Math.random()*canvas.width, Math.random() * canvas.height);
+    } else {
+        particle.pos.reset(canvas.width/2, canvas.height/2);
+    }
+    particle.vel.reset(Math.random()*4-2, Math.random()*4-2);
+    particles.push(particle);
+}
+
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+
+requestAnimFrame(that.loop);
+
+
+// setInterval(function(){
+//     if (showStats) { stats.update(); }
+//     that.loop();
+// }, 1000/60);
+
+function moreParticles(){
+    for (var i = 0; i < particleBump; i++){
+        var particle = new Particle();
+        particle.pos.reset(Math.random()*canvas.width, Math.random() * canvas.height);
+        particle.vel.reset(Math.random()*4-2, Math.random()*4-2);
+        particles.push(particle);
+    }
+}
+
+function toggleStats(){
+    if (!showStats){
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '0px';
+        stats.domElement.style.right = '260px';
+        window.document.body.appendChild( stats.domElement );
+        showStats = true;
+    } else {
+        window.document.body.removeChild(stats.domElement);
+        showStats = false;
+    }
+}
+
+function save() {
+    window.open(canvas.toDataURL('image/png'));
+}
+
+function loop(){
+    if (showStats) { stats.update(); }
+    
+    // autoupdaters
+    if(autoAttract){
+        var target = (autoAttractDir % 2 == 0) ? attractMax : attractMin;
+        attractDistance = attractDistance + (target - attractDistance) * 0.1;
+        if (Math.round(attractDistance) == target){ autoAttractDir++; }
+
+//        var targetFrom = (autoAttractDir % 2 == 0) ? attractMax : attractMin;
+//        var targetTo   = (autoAttractDir % 2 == 0) ? attractMin: attractMax;
+//        var mu = (attractDistance-targetTo)/(targetTo-targetFrom);
+//        var f= (1-Math.cos(mu*Math.PI))*.5;
+//        attractDistance = targetFrom*(1-f)+targetTo*f;
+//        if (Math.round(attractDistance) == targetTo){ autoAttractDir++; }
+
+    }
+
+    if(autoRepel){
+        var target = (autoRepelDir% 2 == 0) ? repelMax : repelMin;
+        repelDistance = repelDistance + (target - repelDistance) * 0.04;
+        if (Math.round(repelDistance) == target){ autoRepelDir++; }
+    }
+
+    // clear screenback
+    if (ghostOn){
+        ctx.fillStyle = "rgba(26,26,26,0.01)";
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+    } else {
+        ctx.clearRect(0,0,canvas.width, canvas.height);    
+    }    
+    
+    // draw mouse if needed
+    mouse.draw(ctx);
+
+    // draw dots
+    for (var i = 0; i < particles.length; i++){
+        var p1 = particles[i];
+        p1.update(canvas);
+        p1.draw(ctx);
+    }
+
+    for (var i = 0; i < particles.length; i++){
+        var p1 = particles[i];
+
+        // connecting lines
+        var connections = 0;
+        for (var j = i+1; j < particles.length; j++){
+            var p2 = particles[j];
+
+            var diff = p2.pos.minusNew(p1.pos);
+            var l = diff.magnitude();
+            if (l < attractDistance){
+                //apply force to both objects vectors
+                var forceamount = 1-(l/repelDistance); //(repel if too close, attract if far away)
+
+                diff.normalise();
+                diff.multiplyEq(forceamount * elasticity);
+                p1.vel.minusEq(diff);
+                p2.vel.plusEq(diff);
+
+                // limit velocity
+                var lim = 100;
+                if (p1.vel.magnitude() > lim){
+                    p1.vel.normalise().multiplyEq(lim);
+                }
+                if (p2.vel.magnitude() > lim){
+                    p2.vel.normalise().multiplyEq(lim);
+                }
+
+                // optimisation: lines are invisible after around 20 connections
+                if (connectionsOn && connections < maxVisibleConnections){
+                    connections++;
+                    ctx.strokeStyle = connectingLineStrokeStyle;
+                    ctx.beginPath();
+                    ctx.lineWidth = connectingLineWidth;
+                    ctx.moveTo(p1.pos.x, p1.pos.y);
+                    ctx.lineTo(p2.pos.x, p2.pos.y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+    requestAnimFrame(that.loop);
+}
+
+
+function Particle(){
+    var pos = this.pos = new Vector2(0,0);
+    var vel = this.vel = new Vector2(0,0);
+
+    this.update = function(canvas){
+        pos.plusEq(vel);
+
+        //add drag
+        vel.multiplyEq(drag);
+
+        // mouse attraction
+        if (clickAttract && mouse.mouseDown){
+            if (pos.isCloseTo(mouse.pos,attractDistance)){
+                pos.plusEq(mouse.pos.minusNew(pos).multiplyNew(0.2));
+                vel.multiplyEq(0.9);
+            }
+        }
+
+        // wrap viewport boundaries
+        if(pos.x < 0) pos.x = canvas.width;
+        else if(pos.x > canvas.width) pos.x = 0;
+        if(pos.y < 0) pos.y = canvas.height;
+        else if(pos.y > canvas.height) pos.y = 0;
+    };
+
+    this.draw = function(ctx){
+
+        // Inner Shell
+        if (innerShellOn){
+            ctx.fillStyle = innerShellFillStyle;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, repelDistance/2.0, 0, Math.PI * 2, true);
+            ctx.fill();
+        }
+
+        // Outer Shell
+        if (outerShellOn){
+            ctx.strokeStyle = outerShellStrokeStyle;
+            ctx.lineWidth   = outerShellLineWidth;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, attractDistance / 2.0, 0, Math.PI * 2, true);
+            ctx.stroke();
+        }
+
+        // Centre point
+        if (centrePointOn){
+            ctx.fillStyle = centrePointFillStyle;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, centrePoint, 0, Math.PI * 2, true);
+            ctx.fill();
+        }
+    };
+}
+
+// User Input
+function initMouseListeners(){
+    document.addEventListener('mousedown', onMouseDown, false);
+    document.addEventListener('mouseup', onMouseUp, false);
+}
+
+function onMouseDown( event ){
+    if (!clickAttract){
+        var particle = new Particle();
+        particle.pos.reset(mouse.pos.x, mouse.pos.y);
+        particle.vel.reset(Math.random()*4-2, Math.random()*4-2);
+        particles.push(particle);
+        if (displayHelp === true){
+            var help = document.getElementById('clickme');
+            help.style.display = 'none';
+            displayHelp = false;
+        }
+    } else{
+        mouse.visible = true;
+    }
+}
+
+function onMouseUp(event){
+    mouse.visible = false;
+}
+
+
+
+</script>
+</div>
+<div id="clickme">
+    Click me!
+</div>
+
+<!--
+<div class="whatsthis">
+ <h3>What's this?</h3>
+ <p>asdfasdfsadf</p>
+</div>
+-->
+</body>
+</html>
